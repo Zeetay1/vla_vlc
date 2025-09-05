@@ -11,9 +11,10 @@
     #result { margin-top: 20px; font-size: 1.2em; font-weight: bold; }
     .success { color: green; }
     .error { color: red; }
-    #log { margin-top: 40px; text-align: left; max-width: 600px; margin-left: auto; margin-right: auto; }
+    #log { margin-top: 40px; text-align: left; max-width: 700px; margin-left: auto; margin-right: auto; }
     table { width: 100%; border-collapse: collapse; }
     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
   </style>
 </head>
 <body>
@@ -23,48 +24,45 @@
   <div id="log">
     <h3>Check-in Log</h3>
     <table>
-      <thead><tr><th>Name</th><th>Status</th><th>Time</th></tr></thead>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Pass Type</th>
+          <th>Status</th>
+          <th>Time</th>
+        </tr>
+      </thead>
       <tbody id="log-body"></tbody>
     </table>
   </div>
 
   <script>
-    const attendees = [
-      {"name": "Kuye Oluwatobi", "status": "", "time": ""},
-      {"name": "Oluwaseyi Ampitan", "status": "", "time": ""},
-      {"name": "Annah Oibe", "status": "", "time": ""},
-      {"name": "David Akin-Thomas", "status": "", "time": ""},
-      {"name": "Eniola Akin-Thomas", "status": "", "time": ""},
-      {"name": "Oluwole Bolu Favour", "status": "", "time": ""},
-      {"name": "Abigail Odionwele", "status": "", "time": ""},
-      {"name": "Aanuoluwapo Emmanuel", "status": "", "time": ""},
-      {"name": "Agbeje Dominion", "status": "", "time": ""},
-      {"name": "Akinfolami Mololuwa", "status": "", "time": ""},
-      {"name": "Faith", "status": "", "time": ""},
-      {"name": "Olutekunbi Victoria", "status": "", "time": ""},
-      {"name": "Aluko Mofopefoluwa", "status": "", "time": ""},
-      {"name": "Isong Okike-faith", "status": "", "time": ""},
-      {"name": "Bright Lauretta", "status": "", "time": ""},
-      {"name": "Ski Name", "status": "", "time": ""}
-    ];
+    const tbody = document.getElementById("log-body");
 
+    function appendLog(name, passType, status, time) {
+      // Prevent duplicates: check if row already exists
+      const existingRow = Array.from(tbody.rows).find(
+        row => row.cells[0].textContent.trim().toLowerCase() === name.trim().toLowerCase()
+      );
 
-    function updateLog() {
-      const tbody = document.getElementById("log-body");
-      tbody.innerHTML = attendees.map(a => `
-        <tr>
-          <td>${a.name}</td>
-          <td>${a.status}</td>
-          <td>${a.time}</td>
-        </tr>
-      `).join("");
+      if (existingRow) {
+        existingRow.cells[1].textContent = passType;
+        existingRow.cells[2].textContent = status;
+        existingRow.cells[3].textContent = time;
+      } else {
+        const row = tbody.insertRow();
+        row.insertCell(0).textContent = name;
+        row.insertCell(1).textContent = passType;
+        row.insertCell(2).textContent = status;
+        row.insertCell(3).textContent = time;
+      }
     }
 
     function processScannedName(name) {
       const payload = new URLSearchParams();
       payload.append("name", name);
 
-      fetch("https://script.google.com/macros/s/AKfycbwuhW7DW3HeeVVZabnP2weOlmNelxsXxOoX1ySD-4h84IIX3crW_imxYgmYwZToeeLliQ/exec", {  // 👈 Replace this
+      fetch("https://script.google.com/macros/s/AKfycbwuhW7DW3HeeVVZabnP2weOlmNelxsXxOoX1ySD-4h84IIX3crW_imxYgmYwZToeeLliQ/exec", {
         method: "POST",
         body: payload
       })
@@ -75,12 +73,20 @@
         resultDiv.className = data.success ? "success" : "error";
 
         if (data.success) {
-          const attendee = attendees.find(a => a.name.trim().toLowerCase() === name.trim().toLowerCase());
-          if (attendee) {
-            attendee.status = "✅ Checked in";
-            attendee.time = new Date().toLocaleString();
-            updateLog();
-          }
+          appendLog(
+            data.name,
+            data.passType,
+            "✅ Checked in",
+            new Date(data.time).toLocaleString()
+          );
+        } else if (data.name) {
+          // If already checked in, still update the log with correct info
+          appendLog(
+            data.name,
+            data.passType || "",
+            "Already checked in",
+            new Date().toLocaleString()
+          );
         }
       })
       .catch(err => {
@@ -108,7 +114,6 @@
       });
     }
 
-    updateLog();
     startScanner();
   </script>
 </body>
