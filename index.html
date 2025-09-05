@@ -68,6 +68,7 @@
       })
       .then(res => res.json())
       .then(data => {
+        console.log("Backend response:", data); // Debugging line
         const resultDiv = document.getElementById("result");
         resultDiv.textContent = data.message;
         resultDiv.className = data.success ? "success" : "error";
