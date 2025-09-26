@@ -1,4 +1,4 @@
-# 📘 VLC Conference Check-In System
+# Conference Check-In System
 
 ## 1. Overview
 
